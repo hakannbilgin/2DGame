@@ -13,13 +13,13 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.oyun.myapplication.databinding.ActivityGameScreenBinding;
 
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,7 +39,16 @@ public class GameScreen extends AppCompatActivity {
 
     //Pozisyonlar
     private int mainCharacterX;
-    private int mainCharactery;
+    private int mainCharacterY;
+
+    private int yellowCircleX;
+    private int yellowCircleY;
+
+    private int blackSquareX;
+    private int blackSquareY;
+
+    private int redTriangleX;
+    private int redTriangleY;
 
 
     //Boyutlar
@@ -49,10 +58,19 @@ public class GameScreen extends AppCompatActivity {
     private int mainCharacterWidth;
 
 
+    //Hızlar
+    private int mainCharacterSpeed;
+    private int blackSquareSpeed;
+    private int redTriangleSpeed;
+    private int yellowCircleSpeed;
+
+
 
     //Kontroller
     private boolean touchCheck=false;
     private boolean beginningTouchCheck=false;
+
+    private int score=0;
 
     private ActivityGameScreenBinding activityGameScreenBinding;
 
@@ -74,15 +92,18 @@ public class GameScreen extends AppCompatActivity {
         redTriangle = findViewById(activityGameScreenBinding.redTriangle.getId());
         mainCharacter = findViewById(activityGameScreenBinding.mainCharacter.getId());
 
-        textViewStartGame.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //startActivity(new Intent(GameScreen.this, ResutScreenActivity.class));
-                //finish();
-            }
-        });
+        //Cisimleri ekranın dışında başlatalım
+        blackSquare.setX(-120);
+        blackSquare.setY(-120);
+        yellowCircle.setX(-120);
+        yellowCircle.setY(-120);
+        redTriangle.setX(-120);
+        redTriangle.setY(-120);
 
-        activityGameScreenBinding.getRoot().setOnTouchListener(new View.OnTouchListener() {
+
+
+        activityGameScreenBinding.getRoot().setOnTouchListener(new View.OnTouchListener()
+        {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
@@ -103,7 +124,7 @@ public class GameScreen extends AppCompatActivity {
                     textViewStartGame.setVisibility(View.INVISIBLE); //Görünmez yaptık
 
                     mainCharacterX= (int)mainCharacter.getX();
-                    mainCharactery = (int)mainCharacter.getY();
+                    mainCharacterY = (int)mainCharacter.getY();
 
                     mainCharacterWidth = mainCharacter.getWidth();
                     mainCharacterHeight = mainCharacter.getHeight();
@@ -122,6 +143,11 @@ public class GameScreen extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     mainCharacterMove();
+                                    moveBlackSquare();
+                                    moveRedTriangle();
+                                    moveYellowCircle();
+                                    collisioncheck();
+
                                 }
                             });
 
@@ -144,29 +170,144 @@ public class GameScreen extends AppCompatActivity {
 
     }
 
-public void mainCharacterMove(){
-    if (touchCheck){
-        mainCharactery= mainCharactery-40;
+    public void mainCharacterMove(){
+        mainCharacterSpeed =  Math.round((float) screenHeight / 55); //hızını 40 yapıyor
 
-    }else {
-        mainCharactery = mainCharactery + 40;
+        if (touchCheck){
+        //mainCharacterY = mainCharacterY -40; //hız eklediğim için kapadım
+            mainCharacterY = mainCharacterY -mainCharacterSpeed;
+
+
+        }else {
+        //mainCharacterY = mainCharacterY + 40; //hız eklediğim için kapadım
+            mainCharacterY = mainCharacterY +mainCharacterSpeed;
+        }
+
+
+
+        if (mainCharacterY <= 0){
+            mainCharacterY =0;
+
+        }
+
+        if (mainCharacterY >=(screenHeight - mainCharacterHeight)){
+            mainCharacterY =screenHeight - mainCharacterHeight;
+        }
+
+        mainCharacter.setY(mainCharacterY);
 
     }
-    //mainCharacter.animateTransform(mainCharacter.setY(mainCharactery));
-    //mainCharacter.animate().x()
-    /// mainCharacter.setScrollY(mainCharactery);
+
+    public void moveBlackSquare(){
+        blackSquareSpeed =  Math.round((float) screenWidth / 72); //hız 15 oluyor.
+
+        //blackSquareX -= 15;
+        blackSquareX -= blackSquareSpeed;
+        if (blackSquareX<0){
+            blackSquareX = screenWidth + 20;
+            //blackSquareY = screenHeight/2;
+            blackSquareY = Util.generateRandomNumber(screenHeight);
+            //blackSquareY = (int) Math.floor(Math.random() * screenHeight);
+
+        }
+
+        blackSquare.setX(blackSquareX);
+        blackSquare.setY(blackSquareY);
 
 
-    if (mainCharactery<= 0){
-        mainCharactery=0;
+        }
+
+    public void moveRedTriangle(){
+
+        redTriangleSpeed =  Math.round((float) screenWidth / 44); //hız 25 oluyor.
+
+//        redTriangleX -= 25;
+        redTriangleX -= redTriangleSpeed;
+        if (redTriangleX<0){
+            redTriangleX = screenWidth + 20;
+            //blackSquareY = screenHeight/2;
+            redTriangleY = Util.generateRandomNumber(screenHeight);
+
+        }
+
+        redTriangle.setX(redTriangleX);
+        redTriangle.setY(redTriangleY);
+
+
+    }
+    public void moveYellowCircle(){
+
+        yellowCircleSpeed =  Math.round((float) screenWidth / 60); //hız 18 oluyor.
+
+//        yellowCircleX -= 18;
+        yellowCircleX -= yellowCircleSpeed;
+        if (yellowCircleX<0){
+            yellowCircleX = screenWidth + 20;
+            //blackSquareY = screenHeight/2;
+            yellowCircleY = Util.generateRandomNumber(screenHeight);
+
+        }
+
+        yellowCircle.setX(yellowCircleX);
+        yellowCircle.setY(yellowCircleY);
+
 
     }
 
-    if (mainCharactery>=(screenHeight - mainCharacterHeight)){
-        mainCharactery=screenHeight - mainCharacterHeight;
+
+    public void collisioncheck(){
+        int yellowcircleCentralX= yellowCircleX + yellowCircle.getWidth()/2;
+        int yellowcircleCentralY= yellowCircleY + yellowCircle.getHeight()/2;
+
+        if (0 <= yellowcircleCentralX
+                && yellowCircleX<= mainCharacterWidth
+                && mainCharacterY <= yellowcircleCentralY
+                && yellowcircleCentralY <= mainCharacterY+ mainCharacterHeight){
+            score +=20;
+            yellowCircleX= -10;
+        };
+
+
+
+        int redTriangleCentralX= redTriangleX + redTriangle.getWidth()/2;
+        int redTriangleCentralY= redTriangleY + redTriangle.getHeight()/2;
+
+        if (0 <= redTriangleCentralX
+                && redTriangleX<= mainCharacterWidth
+                && mainCharacterY <= redTriangleCentralY
+                && redTriangleCentralY <= mainCharacterY+ mainCharacterHeight){
+            score +=50;
+            redTriangleX= -10;
+        };
+
+
+
+        int blackSquareCentralX= blackSquareX + blackSquare.getWidth()/2;
+        int blackSquareCentralY= blackSquareY + blackSquare.getHeight()/2;
+
+        if (0 <= blackSquareCentralX
+                && blackSquareX<= mainCharacterWidth
+                && mainCharacterY <= blackSquareCentralY
+                && blackSquareCentralY <= mainCharacterY+ mainCharacterHeight){
+            blackSquareX= -10;
+
+            //Timer DURDUR.
+            timer.cancel();
+            timer = null;
+
+
+            Intent intent = new Intent(GameScreen.this, ResutScreenActivity.class);
+            intent.putExtra("Score", score);
+            startActivity(intent);
+        };
+
+
+
+        textViewScore.setText(String.valueOf(score));
+
+
+
     }
 
-    mainCharacter.setY(mainCharactery);
 
-}
 }
